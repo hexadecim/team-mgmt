@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose exec *)",
+      "Bash(docker-compose up *)",
+      "Bash(docker-compose ps *)",
+      "Bash(docker exec *)",
+      "Bash(docker-compose down *)",
+      "Bash(curl -s http://localhost:5000/api/health)",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"admin@example.com\",\"password\":\"admin123\"}')",
+      "Bash(curl *)",
+      "Bash(node *)",
+      "Bash(ls -la X:/project-experiment/team-mgmt/.env*)",
+      "Bash(docker-compose restart *)"
+    ]
+  }
+}
