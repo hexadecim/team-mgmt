@@ -191,8 +191,9 @@ const DashboardAndReports = () => {
       const utilization = empAllocations.reduce((sum, alloc) => sum + alloc.allocation_percent, 0);
 
       // Get project details for this employee's allocations
+      // Use full projects list to support cross-practice allocations
       const projectDetails = empAllocations.map((alloc) => {
-        const project = filteredProjects.find((p) => p.id === alloc.project_id);
+        const project = projects.find((p) => p.id === alloc.project_id);
         return {
           project_name: project?.name || 'Unknown Project',
           allocation_percent: alloc.allocation_percent,
@@ -230,8 +231,9 @@ const DashboardAndReports = () => {
         const availability = Math.max(0, 100 - utilization); // FTE% available
 
         // Get project details for this employee's allocations
+        // Use full projects list to support cross-practice allocations
         const projectDetails = empAllocations.map((alloc) => {
-          const project = filteredProjects.find((p) => p.id === alloc.project_id);
+          const project = projects.find((p) => p.id === alloc.project_id);
           return {
             project_name: project?.name || 'Unknown Project',
             allocation_percent: alloc.allocation_percent,
@@ -283,7 +285,8 @@ const DashboardAndReports = () => {
 
     practiceAllocations.forEach((alloc) => {
       const employee = practiceEmployees.find((e) => e.id === alloc.employee_id);
-      const project = filteredProjects.find((p) => p.id === alloc.project_id);
+      // Use full projects list to support cross-practice allocations
+      const project = projects.find((p) => p.id === alloc.project_id);
 
       if (employee && project) {
         rows.push({
@@ -324,7 +327,8 @@ const DashboardAndReports = () => {
       if (availableFTE >= 50) {
         if (empAllocations.length > 0) {
           empAllocations.forEach((alloc) => {
-            const project = filteredProjects.find((p) => p.id === alloc.project_id);
+            // Use full projects list to support cross-practice allocations
+            const project = projects.find((p) => p.id === alloc.project_id);
             rows.push({
               'Employee Name': emp.name,
               'Designation': emp.designation,
