@@ -11,7 +11,8 @@
       "Bash(curl *)",
       "Bash(node *)",
       "Bash(ls -la X:/project-experiment/team-mgmt/.env*)",
-      "Bash(docker-compose restart *)"
+      "Bash(docker-compose restart *)",
+      "Bash(git *)"
     ]
   }
 }

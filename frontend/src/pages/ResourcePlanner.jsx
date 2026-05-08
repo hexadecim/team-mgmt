@@ -25,6 +25,7 @@ import {
   Chip,
   Typography,
   CircularProgress,
+  TextField,
 } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 
@@ -42,8 +43,16 @@ const ResourcePlanner = () => {
   const [warningModal, setWarningModal] = useState(null);
   const [pendingFormData, setPendingFormData] = useState(null);
   const [selectedPractice, setSelectedPractice] = useState('');
+  const [employeeSearchQuery, setEmployeeSearchQuery] = useState('');
   const [allowedPractices, setAllowedPractices] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedFiscalYear, setSelectedFiscalYear] = useState(() => {
+    const today = new Date();
+    const month = today.getMonth();
+    const year = today.getFullYear();
+    // Fiscal year Apr-Mar: if month < 3 (Jan-Mar), fiscal year started in previous year
+    return month < 3 ? year - 1 : year;
+  });
 
   const projectColors = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8',
@@ -185,8 +194,21 @@ const ResourcePlanner = () => {
   };
 
   const getFilteredEmployees = () => {
-    if (!selectedPractice) return employees;
-    return employees.filter((emp) => emp.practice === selectedPractice);
+    let filtered = employees;
+
+    // Filter by practice
+    if (selectedPractice) {
+      filtered = filtered.filter((emp) => emp.practice === selectedPractice);
+    }
+
+    // Filter by name (minimum 3 characters)
+    if (employeeSearchQuery.length >= 3) {
+      filtered = filtered.filter((emp) =>
+        emp.name.toLowerCase().includes(employeeSearchQuery.toLowerCase())
+      );
+    }
+
+    return filtered;
   };
 
   const getFilteredProjects = () => {
@@ -197,18 +219,15 @@ const ResourcePlanner = () => {
   const getFilteredAllocations = () => {
     if (!selectedPractice) return allocations;
     const filteredEmpIds = getFilteredEmployees().map((e) => e.id);
-    const filteredProjIds = getFilteredProjects().map((p) => p.id);
-    return allocations.filter(
-      (alloc) => filteredEmpIds.includes(alloc.employee_id) && filteredProjIds.includes(alloc.project_id)
-    );
+    // Filter by employee practice only - allows cross-practice project allocations to be visible
+    return allocations.filter((alloc) => filteredEmpIds.includes(alloc.employee_id));
   };
 
   const getMonthsRange = () => {
     const months = [];
-    const startDate = new Date();
-
+    // Fiscal year starts in April (month 3)
     for (let i = 0; i < 12; i++) {
-      const date = new Date(startDate.getFullYear(), startDate.getMonth() + i, 1);
+      const date = new Date(selectedFiscalYear, 3 + i, 1); // month 3 = April
       months.push(date);
     }
     return months;
@@ -236,6 +255,20 @@ const ResourcePlanner = () => {
     return projectColors[projectId % projectColors.length];
   };
 
+  const getAvailableFiscalYears = () => {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const months = today.getMonth();
+    const currentFY = months < 3 ? currentYear - 1 : currentYear;
+
+    const years = [];
+    // Show current year and next 2 years (no past years)
+    for (let i = 0; i <= 2; i++) {
+      years.push(currentFY + i);
+    }
+    return years.sort((a, b) => b - a); // Descending order
+  };
+
   const practices = getPractices();
   const filteredEmployees = getFilteredEmployees();
   const months = getMonthsRange();
@@ -250,17 +283,32 @@ const ResourcePlanner = () => {
   }
 
   return (
-    <Box sx={{ py: 3, px: '2px', width: '100%', m: 0 }}>
+    <Box sx={{ py: 3, px: 3, width: '100%', m: 0 }}>
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
       {message && <Alert severity="success" sx={{ mb: 2 }}>{message}</Alert>}
 
       {/* Toolbar */}
       <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Button variant="contained" onClick={handleAddAllocation}>
+        <Button variant="contained" onClick={handleAddAllocation} sx={{ height: 56 }}>
           + Add Allocation
         </Button>
 
-        <FormControl sx={{ minWidth: 200 }}>
+        <FormControl sx={{ minWidth: 180, height: 56 }}>
+          <InputLabel>Fiscal Year</InputLabel>
+          <Select
+            value={selectedFiscalYear}
+            onChange={(e) => setSelectedFiscalYear(e.target.value)}
+            label="Fiscal Year"
+          >
+            {getAvailableFiscalYears().map((year) => (
+              <MenuItem key={year} value={year}>
+                {year}-{String(year + 1).slice(-2)} (Apr-Mar)
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 200, height: 56 }}>
           <InputLabel>Filter by Practice</InputLabel>
           <Select
             value={selectedPractice}
@@ -276,9 +324,23 @@ const ResourcePlanner = () => {
           </Select>
         </FormControl>
 
-        {selectedPractice && (
+        <TextField
+          placeholder="Search employee (min 3 chars)"
+          value={employeeSearchQuery}
+          onChange={(e) => setEmployeeSearchQuery(e.target.value)}
+          variant="outlined"
+          sx={{
+            minWidth: 250,
+            height: 56,
+            '& .MuiOutlinedInput-root': {
+              height: 56,
+            },
+          }}
+        />
+
+        {(selectedPractice || employeeSearchQuery.length >= 3) && (
           <Typography variant="body2" sx={{ color: '#6b7280' }}>
-            ({filteredEmployees.length} employees, {getFilteredProjects().length} projects)
+            ({filteredEmployees.length} employees {selectedPractice && '- showing cross-practice allocations'})
           </Typography>
         )}
       </Box>
@@ -293,7 +355,7 @@ const ResourcePlanner = () => {
             onCancel={handleCancel}
             loading={submitting}
             filteredEmployees={selectedPractice ? filteredEmployees : null}
-            filteredProjects={selectedPractice ? getFilteredProjects() : null}
+            filteredProjects={selectedPractice ? projects : null}
           />
         </DialogContent>
       </Dialog>
