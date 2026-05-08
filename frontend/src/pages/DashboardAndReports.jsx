@@ -141,10 +141,8 @@ const DashboardAndReports = () => {
   const getFilteredAllocations = () => {
     if (!selectedPractice) return allocations;
     const filteredEmpIds = getFilteredEmployees().map((e) => e.id);
-    const filteredProjIds = getFilteredProjects().map((p) => p.id);
-    return allocations.filter(
-      (alloc) => filteredEmpIds.includes(alloc.employee_id) && filteredProjIds.includes(alloc.project_id)
-    );
+    // Filter by employee practice only - allows cross-practice project allocations to be visible
+    return allocations.filter((alloc) => filteredEmpIds.includes(alloc.employee_id));
   };
 
   const practices = getPractices();
